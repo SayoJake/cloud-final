@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h2>Search for Stock Data</h2>
+<form action="/datapull" method="get">
+    <label>Enter Ticker: <input type="text" name="ticker" placeholder="AAPL"></label>
+    <button type="submit">Search</button>
+</form>
+{% endblock %}

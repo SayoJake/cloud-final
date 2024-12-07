@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Trend Prediction{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Trend Prediction for {{ ticker }}</h1>
+
+    <!-- Ticker Selection Form -->
+    <form method="get" action="/trend_prediction">
+        <div class="mb-3">
+            <label for="ticker" class="form-label">Select Ticker:</label>
+            <select class="form-select" name="ticker" id="ticker">
+                {% for t in tickers %}
+                <option value="{{ t }}" {% if t == selected_ticker %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Ticker</button>
+    </form>
+
+    <p>Model R^2 Score: {{ score }}</p>
+    <h3>Predicted Closing Prices:</h3>
+    <ul>
+        {% for pred in predictions %}
+        <li>{{ pred }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

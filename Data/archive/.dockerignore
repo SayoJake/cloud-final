@@ -1,0 +1,13 @@
+# Ignore data files to speed up build
+Data/
+ETFs/
+Stocks/
+
+# Ignore other unnecessary files
+*.log
+*.tmp
+__pycache__/
+*.pyc
+*.pyo
+*.db
+.DS_Store

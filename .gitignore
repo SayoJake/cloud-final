@@ -1,0 +1,8 @@
+# Ignore large directories
+Data/archive/Data/
+Data/archive/ETFs/
+Data/archive/Stocks/
+
+# Ignore other unnecessary files
+*.log
+*.tmp

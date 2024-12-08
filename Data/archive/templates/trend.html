@@ -1,28 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Trend Prediction{% endblock %}
+{% block title %}Trend Analysis{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h1>Trend Prediction for {{ ticker }}</h1>
+    <h1>Trend Analysis for {{ ticker }}</h1>
+    <p><strong>Volatility:</strong> {{ volatility }}</p>
 
-    <!-- Ticker Selection Form -->
     <form method="get" action="/trend_prediction">
         <div class="mb-3">
             <label for="ticker" class="form-label">Select Ticker:</label>
-            <select class="form-select" name="ticker" id="ticker">
+            <input type="text" class="form-control" id="ticker" name="ticker" placeholder="Start typing to search..."
+                   onkeyup="filterTickers()" list="tickerList" value="{{ selected_ticker }}">
+            <datalist id="tickerList">
                 {% for t in tickers %}
-                <option value="{{ t }}" {% if t == selected_ticker %}selected{% endif %}>{{ t }}</option>
+                <option value="{{ t }}"></option>
                 {% endfor %}
-            </select>
+            </datalist>
         </div>
         <button type="submit" class="btn btn-primary">Update Ticker</button>
     </form>
 
-    <p>Model R^2 Score: {{ score }}</p>
-    <h3>Predicted Closing Prices:</h3>
-    <ul>
-        {% for pred in predictions %}
-        <li>{{ pred }}</li>
-        {% endfor %}
-    </ul>
+    <h3>Predicted vs Actual Closing Prices</h3>
+    <div>{{ prediction_chart|safe }}</div>
+
+    <h3>Descriptive Statistics</h3>
+    <div>{{ stats|safe }}</div>
+
+    <h3>Next 3-Day Predictions</h3>
+    <div>{{ future_table|safe }}</div>
 </div>
 {% endblock %}

@@ -1,0 +1,9 @@
+runtime: python310
+entrypoint: gunicorn -w 2 app:app
+
+
+env_variables:
+  GOOGLE_CLOUD_PROJECT: "<cloud-final-finance>"
+  GOOGLE_APPLICATION_CREDENTIALS: "serviceaccount.json"  # Replace if using BigQuery
+
+instance_class: F2

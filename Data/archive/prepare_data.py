@@ -8,7 +8,7 @@ files = os.listdir(stock_dir)
 txt_files = [f for f in files if f.endswith('.txt')]
 
 # Just pick the first 20 files (or fewer if you want)
-txt_files = txt_files[:20]
+txt_files = txt_files[21:40]
 
 dfs = []
 for f in txt_files:
@@ -26,4 +26,4 @@ for f in txt_files:
 combined_df = pd.concat(dfs, ignore_index=True)
 
 # Save combined dataset
-combined_df.to_csv('combined_20_stocks.csv', index=False)
+combined_df.to_csv('combined_21to40_stocks.csv', index=False)

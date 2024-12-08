@@ -4,7 +4,7 @@ from google.cloud import bigquery
 import pandas as pd
 import plotly.express as px
 from io import StringIO
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
 import numpy as np
 
@@ -211,51 +211,6 @@ def mlmodel():
     except Exception as e:
         return render_template('error.html', message=str(e))
 
-@app.route('/churn_prediction', methods=['GET'])
-def churn_prediction():
-    tickers = get_all_tickers()
-    if not tickers:
-        return render_template('error.html', message="No tickers available for Churn Prediction.")
-
-    selected_ticker = request.args.get('ticker', '').upper()
-    if not selected_ticker or selected_ticker not in tickers:
-        selected_ticker = tickers[0]
-
-    query = f"SELECT * FROM `{DATASET_ID}.{TABLE_ID}` WHERE Ticker='{selected_ticker}' ORDER BY Date"
-    try:
-        df = client.query(query).to_dataframe()
-        if df.empty:
-            return render_template('error.html', message=f"No data found for ticker {selected_ticker}.")
-
-        df['Date'] = pd.to_datetime(df['Date'])
-        df['Previous_Close'] = df['Close'].shift(1)
-        df['Volume_Change'] = df['Volume'].pct_change()
-
-        # Handle infinite or NaN values
-        df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        df.dropna(subset=['Volume_Change', 'Previous_Close'], inplace=True)
-        if df.empty:
-            return render_template('error.html', message="Not enough data after cleaning for churn prediction.")
-
-        df['Churn_Flag'] = (df['Volume_Change'] < -0.5).astype(int)
-
-        X = df[['Previous_Close', 'Volume_Change']]
-        y = df['Churn_Flag']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        clf = RandomForestClassifier()
-        clf.fit(X_train, y_train)
-        accuracy = clf.score(X_test, y_test)
-        churn_probs = clf.predict_proba(X_test)[:, 1]
-
-        return render_template('churn.html',
-                               ticker=selected_ticker,
-                               accuracy=f"{accuracy:.2f}",
-                               churn_probs=churn_probs[:10],
-                               tickers=tickers,
-                               selected_ticker=selected_ticker)
-    except Exception as e:
-        return render_template('error.html', message=str(e))
-
 @app.route('/trend_prediction', methods=['GET'])
 def trend_prediction():
     tickers = get_all_tickers()
@@ -268,6 +223,7 @@ def trend_prediction():
 
     query = f"SELECT * FROM `{DATASET_ID}.{TABLE_ID}` WHERE Ticker='{selected_ticker}' ORDER BY Date"
     try:
+        # Load and preprocess data
         df = client.query(query).to_dataframe()
         if df.empty:
             return render_template('error.html', message=f"No data found for ticker {selected_ticker}.")
@@ -275,24 +231,72 @@ def trend_prediction():
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values('Date')
         df['Previous_Close'] = df['Close'].shift(1)
+
+        # Add rolling features
+        df['5_day_avg'] = df['Close'].rolling(window=5).mean()
+        df['10_day_avg'] = df['Close'].rolling(window=10).mean()
+        df['5_day_volatility'] = df['Close'].rolling(window=5).std()
         df = df.dropna()
 
-        X = df[['Previous_Close']]
-        y = df['Close']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        model = GradientBoostingRegressor()
-        model.fit(X_train, y_train)
-        predictions = model.predict(X_test)
-        score = model.score(X_test, y_test)
+        if df.empty:
+            return render_template('error.html', message="Not enough data for predictions.")
 
-        return render_template('trend.html',
-                               ticker=selected_ticker,
-                               predictions=predictions[:10],
-                               score=f"{score:.2f}",
-                               tickers=tickers,
-                               selected_ticker=selected_ticker)
+        # Prepare data for ML
+        X = df[['Previous_Close', '5_day_avg', '10_day_avg', '5_day_volatility']]
+        y = df['Close']
+
+        # Train Gradient Boosting Model
+        gbr_model = GradientBoostingRegressor()
+        gbr_model.fit(X, y)
+
+        # Train Random Forest Model
+        rf_model = RandomForestRegressor()
+        rf_model.fit(X, y)
+
+        # Predict next 3 days
+        from datetime import timedelta
+        last_date = df['Date'].iloc[-1]
+        last_row = X.iloc[-1]
+        future_dates = [last_date + timedelta(days=i) for i in range(1, 4)]
+        gbr_predictions, rf_predictions = [], []
+
+        for _ in range(3):
+            gbr_pred = gbr_model.predict([last_row])[0]
+            rf_pred = rf_model.predict([last_row])[0]
+            gbr_predictions.append(gbr_pred)
+            rf_predictions.append(rf_pred)
+
+            # Update rolling features
+            last_row['Previous_Close'] = gbr_pred
+            last_row['5_day_avg'] = (last_row['5_day_avg'] * 4 + gbr_pred) / 5
+            last_row['10_day_avg'] = (last_row['10_day_avg'] * 9 + gbr_pred) / 10
+            last_row['5_day_volatility'] = np.std([last_row['Previous_Close'], gbr_pred])
+
+        # Visualization
+        fig = px.line(df, x='Date', y='Close', title=f"{selected_ticker} Historical Data and Predictions")
+        future_df = pd.DataFrame({'Date': future_dates, 'GBR_Prediction': gbr_predictions, 'RF_Prediction': rf_predictions})
+        for col in ['GBR_Prediction', 'RF_Prediction']:
+            fig.add_scatter(x=future_df['Date'], y=future_df[col], mode='lines', name=col)
+
+        # Descriptive Statistics
+        stats = df[['Close']].describe().to_html(classes="table table-striped", float_format="%.2f")
+
+        # Volatility Analysis
+        volatility = df['5_day_volatility'].mean()
+
+        return render_template(
+            'trend.html',
+            ticker=selected_ticker,
+            prediction_chart=fig.to_html(full_html=False),
+            tickers=tickers,
+            selected_ticker=selected_ticker,
+            future_table=future_df.to_html(index=False, classes="table table-striped", float_format="%.2f"),
+            stats=stats,
+            volatility=f"Avg. Volatility (5-day): {volatility:.2f}"
+        )
     except Exception as e:
         return render_template('error.html', message=str(e))
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

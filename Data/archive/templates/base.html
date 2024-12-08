@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Financial App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            {% if 'username' in session %}
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/upload">Upload</a></li>
+                <li><a href="/trend_prediction">Trend</a></li>
+                <li><a href="/logout">Logout</a></li>
+            {% else %}
+                <li><a href="/signup">Sign Up</a></li>
+                <li><a href="/login">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

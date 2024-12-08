@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Trend Analysis{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Trend Analysis for {{ ticker }}</h1>
+    <p><strong>Volatility:</strong> {{ volatility }}</p>
+
+    <form method="get" action="/trend_prediction">
+        <div class="mb-3">
+            <label for="ticker" class="form-label">Select Ticker:</label>
+            <input type="text" class="form-control" id="ticker" name="ticker" placeholder="Start typing to search..."
+                   onkeyup="filterTickers()" list="tickerList" value="{{ selected_ticker }}">
+            <datalist id="tickerList">
+                {% for t in tickers %}
+                <option value="{{ t }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Ticker</button>
+    </form>
+
+    <h3>Predicted vs Actual Closing Prices</h3>
+    <div>{{ prediction_chart|safe }}</div>
+
+    <h3>Descriptive Statistics</h3>
+    <div>{{ stats|safe }}</div>
+
+    <h3>Next 3-Day Predictions</h3>
+    <div>{{ future_table|safe }}</div>
+</div>
+{% endblock %}

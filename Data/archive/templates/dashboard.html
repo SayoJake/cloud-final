@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Financial Dashboard{% endblock %}
+{% block content %}
+<script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/css/bootstrap-select.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js"></script>
+
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Financial Dashboard</h1>
+    <!-- Ticker Selection Form -->
+    <form method="get" action="/dashboard">
+        <div class="mb-3">
+            <label for="ticker" class="form-label">Select Ticker:</label>
+            <select class="form-select selectpicker" data-live-search="true" name="ticker" id="ticker">
+                {% for ticker in tickers %}
+                <option value="{{ ticker }}" {% if ticker == selected_ticker %}selected{% endif %}>{{ ticker }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Dashboard</button>
+    </form>
+
+    <!-- Interactive Graphs -->
+    <div id="price-chart" class="mt-5">
+        <h3>Closing Price Trends</h3>
+        {{ graph_html|safe }}
+    </div>
+
+    <div id="volume-correlation" class="mt-5">
+        <h3>Volume vs. Close Price Correlation</h3>
+        {{ volume_correlation_html|safe }}
+    </div>
+
+    <div id="monthly-performance" class="mt-5">
+        <h3>Monthly Performance Overview</h3>
+        {{ monthly_performance_html|safe }}
+    </div>
+
+    <!-- Insights Section -->
+    <div class="mt-5">
+        <h3>Key Insights</h3>
+        <p>{{ insights }}</p>
+    </div>
+
+    <!-- Top Gainers and Losers -->
+    <div id="top-movers" class="mt-5">
+        <h3>Top Gainers and Losers</h3>
+        {{ top_movers_table|safe }}
+    </div>
+
+    <!-- Summary Statistics -->
+    <div id="stats" class="mt-5">
+        <h3>Summary Statistics</h3>
+        {{ stats_table|safe }}
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('.selectpicker').selectpicker('refresh');
+});
+</script>
+{% endblock %}

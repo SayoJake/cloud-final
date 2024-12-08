@@ -7,3 +7,4 @@ Data/archive/serviceaccount.json
 # Ignore other unnecessary files
 *.log
 *.tmp
+"Data/archive/serviceaccount.json" 

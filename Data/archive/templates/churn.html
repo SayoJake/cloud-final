@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Churn Prediction{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Churn Prediction for {{ ticker }}</h1>
+
+    <!-- Ticker Selection Form -->
+    <form method="get" action="/churn_prediction">
+        <div class="mb-3">
+            <label for="ticker" class="form-label">Select Ticker:</label>
+            <select class="form-select" name="ticker" id="ticker">
+                {% for t in tickers %}
+                <option value="{{ t }}" {% if t == selected_ticker %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Ticker</button>
+    </form>
+
+    <p>Model Accuracy: {{ accuracy }}</p>
+    <h3>Top Churn Probabilities:</h3>
+    <ul>
+        {% for prob in churn_probs %}
+        <li>{{ prob }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

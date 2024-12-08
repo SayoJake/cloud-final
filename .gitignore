@@ -2,6 +2,7 @@
 Data/archive/Data/
 Data/archive/ETFs/
 Data/archive/Stocks/
+Data/archive/serviceaccount.json
 
 # Ignore other unnecessary files
 *.log
